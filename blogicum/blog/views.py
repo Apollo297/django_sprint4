@@ -1,10 +1,24 @@
 import datetime as dt
-
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, render
 
 from blog.models import Post, Category
 
 FIVE_RECENT_PUBLICATIONS = 5
+
+
+class PostCreateView(CreateView):
+    model = Post
+    fields = '__all__'
+    template_name = 'blog/create.html'
+    success_url = reverse_lazy() # profile/<username>/
+
+
+def profile_page(request):
+    template = 'blog/profile.html'
+    profile = Post.objects.all()
+    return render(request, template, {'profile': profile})
 
 
 def index(request):
@@ -17,6 +31,7 @@ def index(request):
     ).order_by('-pub_date')[:FIVE_RECENT_PUBLICATIONS]
     context = {'post_list': post_list}
     return render(request, template, context)
+
 
 
 def post_detail(request, id):
