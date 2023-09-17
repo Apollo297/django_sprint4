@@ -37,6 +37,7 @@ MIDDLEWARE = [
 
 INTERNAL_IPS = [
     '127.0.0.1',
+    'localhost',
 ]
 
 ROOT_URLCONF = 'blogicum.urls'
@@ -115,3 +116,5 @@ EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 LOGIN_REDIRECT_URL = 'blog:index'
 
 LOGIN_URL = 'login'
+
+MEDIA_ROOT = BASE_DIR / 'media'

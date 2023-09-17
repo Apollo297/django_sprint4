@@ -4,12 +4,12 @@ from . import views
 
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('posts/<int:id>/', views.post_detail, name='post_detail'),
+    path('posts/<int:id>/', views.PostsDetailView.as_view(), name='post_detail'),
     path('category/<slug:category_slug>/', views.category_posts,
          name='category_posts'),
-    path('', views.PostCreateView.as_view(), name='create'),
-    path('profile/<int:id>/', views.profile_page, name='profile')
+    path('posts/create/', views.PostCreateView.as_view(), name='create'),
+    path('list/', views.PostListView.as_view(), name='index'),
+    path('profile/<str:username>/', views.PostsDetailView, name='profile')
 ]
 
 app_name = 'blog'
