@@ -9,6 +9,7 @@ class PostAdmin(admin.ModelAdmin):
         'text',
         'is_published',
         'category',
+        'location',
     )
     list_editable = (
         'is_published',

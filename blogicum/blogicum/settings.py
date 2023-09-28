@@ -8,7 +8,10 @@ SECRET_KEY = 'django-insecure-bih4jy6vzx#pwp^b7c-p=9s3t&z(#+2715b14-6l)cthqr&n27
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+]
 
 
 INSTALLED_APPS = [
@@ -37,7 +40,6 @@ MIDDLEWARE = [
 
 INTERNAL_IPS = [
     '127.0.0.1',
-    'localhost',
 ]
 
 ROOT_URLCONF = 'blogicum.urls'
@@ -97,9 +99,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 STATIC_URL = '/static/'
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -118,3 +118,6 @@ LOGIN_REDIRECT_URL = 'blog:index'
 LOGIN_URL = 'login'
 
 MEDIA_ROOT = BASE_DIR / 'media'
+
+STATIC_ROOT = ''
+

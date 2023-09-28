@@ -10,8 +10,12 @@ User = get_user_model()
 class PostForm(forms.ModelForm):
 
     class Meta:
+        # Указываем модель, на основе которой должна строиться форма.
         model = Post
-        fields = '__all__'
+        exclude = ('author',)
+        widgets = {
+            'pub_date': forms.DateInput(attrs={'type': 'date'})
+        }
 
 
 class CommentForm(forms.ModelForm):
@@ -24,11 +28,11 @@ class CommentForm(forms.ModelForm):
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email',)
+        fields = ('username', 'first_name', 'last_name', 'email',)
 
 
-class PasswordChangeForm(forms.ModelForm):
+# class PasswordForm(forms.ModelForm):
 
-    class Meta:
-        model = User
-        fields = ('password',)
+#     class Meta:
+#         model = User
+#         fields = ('password',)
