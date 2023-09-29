@@ -13,6 +13,7 @@ class PostForm(forms.ModelForm):
         # Указываем модель, на основе которой должна строиться форма.
         model = Post
         exclude = ('author',)
+        # Виджет для ввода даты и времени публикации
         widgets = {
             'pub_date': forms.DateTimeInput(format='%Y-%m-%dT%H:%M',
                                             attrs={'type': 'datetime-local'})

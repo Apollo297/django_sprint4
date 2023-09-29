@@ -23,7 +23,7 @@ PAGE_PAGINATOR = 10
 
 class IndexHome(ListView):
     model = Post
-    ordering = 'id'
+    ordering = '-pub_date'
     paginate_by = PAGE_PAGINATOR
     template_name = 'blog/index.html'
 
@@ -44,6 +44,7 @@ class ProfileView(ListView):
     model = User
     template_name = 'blog/profile.html'
     paginate_by = PAGE_PAGINATOR
+    ordering = 'id'
 
     def get_context_data(self, **kwargs):
         # Получаем словарь контекста:
@@ -164,6 +165,13 @@ class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
     form_class = CommentForm
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Post.objects.select_related('location', 'author', 'category')
+            .filter(pub_date__lte=dt.datetime.now(),
+                    is_published=True,
+                    category__is_published=True), pk=self.kwargs['pk'])
 
     def get_context_data(self, **kwargs):
         # Получаем словарь контекста:
