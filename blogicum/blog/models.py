@@ -103,3 +103,8 @@ class Comment(PublishedModel):
 
     class Meta:
         ordering = ('created_at',)
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+
+        def __str__(self):
+            return f'Комментарий от пользователя {self.author}'
