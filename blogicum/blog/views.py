@@ -67,13 +67,13 @@ class ProfileView(ListView):
                     is_published=True,
                     author=self.author).annotate(
                         comment_count=Count('comments')
-                    ).order_by('-pub_date')
+                ).order_by('-pub_date')
         # Если автор - показываем все посты
         return Post.objects.select_related(
             'category', 'location', 'author').filter(
                 author=self.author).annotate(
                     comment_count=Count('comments')
-                ).order_by('-pub_date')
+            ).order_by('-pub_date')
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
