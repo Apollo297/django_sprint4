@@ -65,16 +65,16 @@ class ProfileView(ListView):
         if self.author != self.request.user:
             return Post.objects.select_related(
                     'category', 'location', 'author').filter(
-                    is_published=True,
-                    author=self.author).annotate(
-                        comment_count=Count('comments')
-                    ).order_by('-pub_date')
+                        is_published=True,
+                        author=self.author).annotate(
+                            comment_count=Count('comments')
+                        ).order_by('-pub_date')
         # Если автор - показываем все посты
         return Post.objects.select_related(
                     'category', 'location', 'author').filter(
-                    author=self.author).annotate(
-                        comment_count=Count('comments')
-                    ).order_by('-pub_date')
+                        author=self.author).annotate(
+                            comment_count=Count('comments')
+                        ).order_by('-pub_date')
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
@@ -171,7 +171,7 @@ class PostDetailView(DetailView):
     def get_object(self, queryset=None):
         # Проверяем наличие поста в БД по pk без фильтров.
         get_object_or_404(self.model.objects.select_related(
-                'location', 'category', 'author'), pk=self.kwargs['pk']
+            'location', 'category', 'author'), pk=self.kwargs['pk']
         )
         obj = self.model.objects.get(pk=self.kwargs['pk'])
         # Проверяем авторство, используя фильтры.
