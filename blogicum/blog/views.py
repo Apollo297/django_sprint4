@@ -7,12 +7,11 @@ from django.views.generic import (
     DeleteView,
     DetailView,
 )
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
 
 from blog.models import Post, Category, Comment
 from .forms import PostForm, CommentForm, UserForm
@@ -23,6 +22,8 @@ PAGE_PAGINATOR = 10
 
 
 class IndexHome(ListView):
+    """Главная страница блога."""
+
     model = Post
     ordering = '-pub_date'
     paginate_by = PAGE_PAGINATOR
@@ -42,15 +43,15 @@ class IndexHome(ListView):
 
 
 class ProfileView(ListView):
+    """Рендеринг профиля пользователя."""
+
     model = User
     template_name = 'blog/profile.html'
     paginate_by = PAGE_PAGINATOR
     ordering = 'id'
 
     def get_context_data(self, **kwargs):
-        # Получаем словарь контекста:
         context = super().get_context_data(**kwargs)
-        # Добавляем в словарь новый ключ:
         context['profile'] = get_object_or_404(
             User,
             username=self.kwargs['username'])
@@ -83,23 +84,27 @@ class ProfileView(ListView):
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование профиля."""
+
     model = User
     from_class = UserForm
     template_name = 'blog/user.html'
     fields = ('username', 'first_name', 'last_name', 'email',)
 
     def get_object(self, queryset=None):
-        get_object_or_404(User, username=self.request.user.get_username())
+        get_object_or_404(User, username=self.request.user)
         return self.request.user
 
     def get_success_url(self):
-        return reverse_lazy(
+        return reverse(
             'blog:profile',
-            kwargs={'username': self.request.user.get_username()}
+            kwargs={'username': self.request.user}
         )
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
+    """Создание нового поста."""
+
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -113,13 +118,15 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse_lazy(
+        return reverse(
             'blog:profile',
-            kwargs={'username': self.request.user.get_username()}
+            kwargs={'username': self.request.user}
         )
 
 
 class PostUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование поста."""
+
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -135,10 +142,12 @@ class PostUpdateView(LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self) -> str:
-        return reverse_lazy('blog:post_detail', args=[self.kwargs['post_id']])
+        return reverse('blog:post_detail', args=[self.kwargs['post_id']])
 
 
 class PostDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление поста."""
+
     model = Post
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
@@ -151,34 +160,44 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
             return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        # Получаем словарь контекста:
         context = super().get_context_data(**kwargs)
-        # Добавляем в словарь новый ключ:
         context['form'] = PostForm(instance=self.object)
         return context
 
     def get_success_url(self):
-        return reverse_lazy('blog:profile', args=[self.request.user])
+        return reverse('blog:profile', args=[self.request.user])
 
 
 class PostDetailView(DetailView):
+    """Рендеринг страницы с отдельным постом."""
+
     model = Post
     template_name = 'blog/detail.html'
 
     def get_object(self, queryset=None):
-        return get_object_or_404(
-            Post.objects.select_related('location', 'author', 'category')
-            .filter(pub_date__lte=dt.datetime.now(),
-                    category__is_published=True), pk=self.kwargs['pk'])
+        # Проверяем наличие поста в БД по pk без фильтров.
+        get_object_or_404(self.model.objects.select_related(
+                'location', 'category', 'author'), pk=self.kwargs['pk']
+        )
+        obj = self.model.objects.get(pk=self.kwargs['pk'])
+        # Проверяем авторство, используя фильтры.
+        if obj.author != self.request.user:
+            return get_object_or_404(
+                self.model.objects.select_related(
+                    'location', 'category', 'author'
+                    ).filter(
+                        pub_date__lte=dt.datetime.now(),
+                        category__is_published=True,
+                        is_published=True),
+                pk=self.kwargs['pk']
+            )
+        return super().get_object()
 
     def get_context_data(self, **kwargs):
         # Получаем словарь контекста:
         context = super().get_context_data(**kwargs)
-        post = get_object_or_404(Post, pk=self.kwargs.get('pk'))
-        if post.author != self.request.user and not post.is_published:
-            return redirect('blog:post_detail', self.kwargs['pk'])
         # Добавляем в словарь новый ключ:
-        context['form'] = CommentForm
+        context['form'] = CommentForm()
         context['comments'] = (
             # Дополнительно подгружаем авторов комментариев,
             # чтобы избежать множества запросов к БД.
@@ -188,6 +207,8 @@ class PostDetailView(DetailView):
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
+    """Создание нового комментария."""
+
     model = Comment
     form_class = CommentForm
     pk_url_kwarg = 'post_id'
@@ -210,24 +231,27 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
 
 
 class CommentUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование комментария."""
+
     model = Comment
     template_name = 'blog/comment.html'
     fields = ('text',)
     pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        print(kwargs)
         instance = get_object_or_404(Comment, pk=kwargs['comment_id'])
         # Сверяем автора объекта и пользователя из запроса.
         if instance.author != request.user:
-            return redirect('blog:post_detail')
+            return redirect('blog:post_detail', self.kwargs['post_id'])
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self) -> str:
-        return reverse_lazy('blog:post_detail', args=[self.kwargs['post_id']])
+        return reverse('blog:post_detail', args=[self.kwargs['post_id']])
 
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление комментария."""
+
     model = Comment
     template_name = 'blog/comment.html'
     pk_url_kwarg = 'comment_id'
@@ -239,18 +263,13 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
         else:
             return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        # Получаем словарь контекста:
-        context = super().get_context_data(**kwargs)
-        # Добавляем в словарь новый ключ:
-        context['form'] = CommentForm(instance=self.object)
-        return context
-
     def get_success_url(self):
-        return reverse_lazy('blog:post_detail', args=[self.kwargs['post_id']])
+        return reverse('blog:post_detail', args=[self.kwargs['post_id']])
 
 
 class CategoryListView(ListView):
+    """Рендеринг публикаий в конкретной категории."""
+
     model = Category
     template_name = 'blog/category.html'
     paginate_by = PAGE_PAGINATOR
@@ -272,7 +291,6 @@ class CategoryListView(ListView):
             comment_count=Count('comments')).order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
-        # Получаем словарь контекста:
         context = super().get_context_data(**kwargs)
         # Добавляем в словарь новый ключ:
         context['category'] = get_object_or_404(
