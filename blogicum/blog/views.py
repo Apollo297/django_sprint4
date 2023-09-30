@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
 
 from blog.models import Post, Category, Comment
 from .forms import PostForm, CommentForm, UserForm
@@ -127,7 +128,6 @@ class PostUpdateView(LoginRequiredMixin, UpdateView):
     def dispatch(self, request, *args, **kwargs):
         # При получении объекта не указываем автора.
         # Результат сохраняем в переменную.
-        print(kwargs)
         instance = get_object_or_404(Post, pk=kwargs['post_id'])
         # Сверяем автора объекта и пользователя из запроса.
         if instance.author != request.user:
@@ -164,18 +164,19 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
-    form_class = CommentForm
 
     def get_object(self, queryset=None):
         return get_object_or_404(
             Post.objects.select_related('location', 'author', 'category')
             .filter(pub_date__lte=dt.datetime.now(),
-                    is_published=True,
                     category__is_published=True), pk=self.kwargs['pk'])
 
     def get_context_data(self, **kwargs):
         # Получаем словарь контекста:
         context = super().get_context_data(**kwargs)
+        post = get_object_or_404(Post, pk=self.kwargs.get('pk'))
+        if post.author != self.request.user and not post.is_published:
+            return redirect('blog:post_detail', self.kwargs['pk'])
         # Добавляем в словарь новый ключ:
         context['form'] = CommentForm
         context['comments'] = (
@@ -254,13 +255,21 @@ class CategoryListView(ListView):
     template_name = 'blog/category.html'
     paginate_by = PAGE_PAGINATOR
 
+    def dispatch(self, request, *args, **kwargs):
+        get_object_or_404(
+            Category,
+            slug=kwargs['category_slug'],
+            is_published=True,
+        )
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return Post.objects.select_related(
             'author', 'location', 'category').filter(
             category__slug=self.kwargs['category_slug'],
             is_published=True,
             pub_date__lte=dt.datetime.now()).annotate(
-            comment_count=Count('comments')).order_by('pub_date')
+            comment_count=Count('comments')).order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         # Получаем словарь контекста:
