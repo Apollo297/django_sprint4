@@ -1,5 +1,6 @@
-from blog import views
 from django.urls import include, path
+
+from blog import views
 
 app_name = 'blog'
 

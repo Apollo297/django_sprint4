@@ -16,4 +16,4 @@ class PublishedModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['-order_date']
+        ordering = ('-order_date',)
