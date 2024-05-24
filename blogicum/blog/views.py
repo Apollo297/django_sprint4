@@ -24,7 +24,7 @@ class IndexHome(CustomListMixin, ListView):
 
 
 class CategoryListView(CustomListMixin, ListView):
-    """Рендеринг публикаий в конкретной категории."""
+    """Рендеринг публикаций в конкретной категории."""
 
     template_name = 'blog/category.html'
 
