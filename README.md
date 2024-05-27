@@ -67,3 +67,4 @@ python manage.py createsuperuser
 ```python
 python3 manage.py runserver
 ```
+Автор: Нечепуренко Алексей
